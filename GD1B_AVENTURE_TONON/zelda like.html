@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" /><title>Mon 1er jeu Phaser</title>
+        <script src="//cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+        
+        <style type="text/css"> body { margin: 0; }</style>
+    </head>
+    <body>
+        <script type="text/javascript">
+
+        var boutonFeu;  
+        var groupeBullets;  
+
+    
+
+            class sceneExemple extends Phaser.Scene {
+                    constructor(){
+                        super("sceneExemple");
+                    }
+                    preload(){
+                        this.load.tilemapTiledJSON('murJson', 'assets/map.json');
+                        this.load.image('tilesprite', 'assets/assets_2.png');
+                        this.load.image("bullet", "assets/laser.png");
+                        this.load.image("ecranA", "assets/écran_A.png");
+                        this.load.image("ecranF", "assets/écran_F.png");
+                        this.load.image("ecranI", "assets/écran_I.png");
+                        this.load.image("ecranS", "assets/écran_S.png");
+                        this.load.image("ecranB", "assets/écran_B.png");
+                        this.load.image("ecranP", "assets/écran_P.png");
+                        this.load.image("monster", "assets/monster.png");
+                        this.load.spritesheet("arme_munition", "assets/arme_munition.png",
+                        { frameWidth: 136, frameHeight: 60 });
+                        this.load.spritesheet("vie", "assets/barre_de_vie.png",
+                        { frameWidth: 136, frameHeight: 44 });
+                        this.load.spritesheet('perso','assets/perso2.png',
+                        { frameWidth: 32, frameHeight: 32 });
+                    }
+                
+
+            
+
+                    create(){
+
+                        const carteDuNiveau = this.add.tilemap('murJson');
+                        const tileset = carteDuNiveau.addTilesetImage(
+                        "assets_2",
+                        "tilesprite"
+                        
+
+                    );  
+                        //chargement du calque calque_background
+                    const backgroundLayer = carteDuNiveau.createLayer(
+                        "fond",
+                        tileset
+                        );
+
+                    const backgroundLayer1 = carteDuNiveau.createLayer(
+                        "sol",
+                        tileset
+                        );     
+
+                // chargement du calque calque_plateformes
+                const plateformes = carteDuNiveau.createLayer(
+                        "mur",
+                        tileset
+                        );  
+
+                 const backgroundLayer2 = carteDuNiveau.createLayer(
+                         "objet",
+                         tileset
+                         );
+                plateformes.setCollisionByProperty({estSolide: true }); 
+       
+                groupeBullets = this.physics.add.group();  
+
+                
+                this.player = this.physics.add.sprite(560, 1550, 'perso');
+                this.player.setBounce(0.2);
+                this.player.setCollideWorldBounds(true);
+                this.player.munition = 8;
+                this.player.hp = 6;
+                this.monster = this.add.image(1050, 450, 'monster').setVisible(true);
+                this.physics.add.collider(this.player, this.monster, this.aie, null, this);
+                this.physics.add.collider(this.player, plateformes);
+                
+                this.pass = false
+                
+                this.anims.create({
+                key: 'left',
+                frames: this.anims.generateFrameNumbers('perso', {start:0,end:3}),
+                frameRate: 10,
+                repeat: -1
+                });
+                this.anims.create({
+                key: 'turn',
+                frames: [ { key: 'perso', frame: 4 } ],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'right',
+                frames: this.anims.generateFrameNumbers('perso', {start:5,end:8}),
+                frameRate: 10,
+                repeat: -1
+                });
+                this.anims.create({
+                key: 'front',
+                frames: this.anims.generateFrameNumbers('perso', {start:9,end:12}),
+                frameRate: 10,
+                repeat: -1
+                });
+                this.anims.create({
+                key: 'back',
+                frames: this.anims.generateFrameNumbers('perso', {start:13,end:16}),
+                frameRate: 10,
+                repeat: -1
+                });
+                
+                
+                this.cursors = this.input.keyboard.createCursorKeys();
+                boutonFeu = this.input.keyboard.addKey('A'); 
+                
+               
+                
+                this.cameras.main.setBounds(0, 0, 3200, 3200);
+                this.physics.world.setBounds(0, 0, 3200, 3200);
+                this.cameras.main.startFollow(this.player);
+
+
+
+                this.lavie = this.physics.add.sprite(75, 550, 'vie').setScrollFactor(0);
+                this.ecranA = this.add.image(450, 300, 'ecranA').setScale(1.8).setVisible(false).setScrollFactor(0);
+                this.ecranF = this.add.image(450, 300, 'ecranF').setScale(1.8).setVisible(false).setScrollFactor(0);
+                this.ecranI = this.add.image(450, 300, 'ecranI').setScale(1.8).setVisible(false).setScrollFactor(0);
+                this.ecranS = this.add.image(450, 300, 'ecranS').setScale(1.8).setVisible(false).setScrollFactor(0);
+                this.ecranB = this.add.image(450, 300, 'ecranB').setScale(1.8).setVisible(false).setScrollFactor(0);
+                this.ecranP = this.add.image(450, 300, 'ecranP').setScale(1.5).setVisible(false).setScrollFactor(0);
+
+                this.anims.create({
+                key: 'vie1',
+                frames: [{ key: 'vie', frame: 0 }],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'vie2',
+                frames:[{ key: 'vie', frame: 1 }],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'vie3',
+                frames:[{ key: 'vie', frame: 2 }],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'vie4',
+                frames: [{ key: 'vie', frame: 3 }],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'vie5',
+                frames: [{ key: 'vie', frame: 4 }],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'vie6',
+                frames:[{ key: 'vie', frame: 5 }],
+                frameRate: 20
+                });
+
+                this.arme = this.physics.add.sprite(800, 550, 'arme_munition').setScrollFactor(0);
+
+                this.anims.create({
+                key: 'munition_0',
+                frames: [{ key: 'arme_munition', frame: 0 }],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'munition_1',
+                frames:[{ key: 'arme_munition', frame: 1 }],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'munition_2',
+                frames:[{ key: 'arme_munition', frame: 2 }],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'munition_3',
+                frames: [{ key: 'arme_munition', frame: 3 }],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'munition_4',
+                frames: [{ key: 'arme_munition', frame: 4 }],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'munition_5',
+                frames:[{ key: 'arme_munition', frame: 5 }],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'munition_6',
+                frames:[{ key: 'arme_munition', frame: 6 }],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'munition_7',
+                frames:[{ key: 'arme_munition', frame: 7 }],
+                frameRate: 20
+                });
+                this.anims.create({
+                key: 'munition_8',
+                frames:[{ key: 'arme_munition', frame: 8 }],
+                frameRate: 20
+                });
+                
+                
+                            }
+update(){
+                if(this.player.hp = 6){
+                    this.lavie.anims.play('vie6');}
+                else if(this.player.hp = 5){
+                    this.lavie.anims.play('vie5');}
+                else if(this.player.hp = 4){
+                    this.lavie.anims.play('vie4');}
+                else if(this.player.hp = 3){
+                    this.lavie.anims.play('vie3');}
+                else if(this.player.hp = 2){
+                    this.lavie.anims.play('vie2');}
+                else{
+                    this.lavie.anims.play('vie1');}
+
+                if (this.gameOver){return;}
+
+                if(this.player.munition = 8){
+                    this.arme.anims.play('munition_8');}
+                else if(this.player.munition = 7){
+                    this.arme.anims.play('munition_7');}
+                else if(this.player.munition = 6){
+                    this.arme.anims.play('munition_6');}
+                else if(this.player.munition = 5){
+                    this.arme.anims.play('munition_5');}
+                else if(this.player.munition = 4){
+                    this.arme.anims.play('munition_4');}
+                else if(this.player.munition = 3){
+                    this.arme.anims.play('munition_3');}
+                else if(this.player.munition = 2){
+                    this.arme.anims.play('munition_2');}
+                else if(this.player.munition = 1){
+                    this.arme.anims.play('munition_1');}
+                else if(this.player.munition = 0){
+                    this.arme.anims.play('munition_0');}
+
+
+
+
+                if ( Phaser.Input.Keyboard.JustDown(boutonFeu)) {
+                 tirer(this.player);
+                 this.player.munition -=1 ;
+                 }  
+
+                if (this.cursors.up.isDown){this.player.anims.play('back', true);
+            if (this.cursors.down.isDown) {
+                this.player.setVelocityY(0);
+            }
+            else {
+                if (this.player.body.velocity.x != 0) {
+                    this.player.setVelocityY(-200);
+                } else {
+                    this.player.setVelocityY(-300);
+                }
+            }
+        }
+        else if (this.cursors.down.isDown){this.player.anims.play('front', true);
+            if (this.player.body.velocity.x != 0) {
+                    this.player.setVelocityY(200);
+                } else {
+                    this.player.setVelocityY(300);
+                }
+        }
+        else {this.player.setVelocityY(0);}
+        //Déplacement horizontal
+        // déclenchement de la fonction tirer() si appui sur boutonFeu 
+
+        if (this.cursors.left.isDown){
+            this.player.anims.play('left', true); //et animation => gauche
+            if (this.cursors.right.isDown) {
+                this.player.setVelocityX(0);
+            }
+            else {
+                if (this.player.body.velocity.y != 0) {
+                    this.player.setVelocityX(-200);
+                } else {
+                    this.player.setVelocityX(-300);
+                }
+            }
+        }
+        else if (this.cursors.right.isDown){
+            this.player.anims.play('right', true);
+            if (this.player.body.velocity.y != 0) {
+                    this.player.setVelocityX(200);
+                } else {
+                    this.player.setVelocityX(300);
+                }
+        }
+        else
+        {this.player.setVelocityX(0);}
+        if (this.player.body.velocity.y == 0 & this.player.body.velocity.x == 0){
+            this.player.anims.play('turn');
+        }
+        if (this.player.x >= 1175 && this.player.x <= 1225 &&  this.player.y >= 500 && this.player.y <= 550){
+            this.player.x = 1700;
+            this.player.y = 525;
+        }
+        if (this.player.x >= 1600 && this.player.x <= 1650 &&  this.player.y >= 500 && this.player.y <= 550){
+            this.player.x = 1100;
+            this.player.y = 525;
+        }
+        if (this.player.x >= 2000 && this.player.x <= 2050 &&  this.player.y >= 700 && this.player.y <= 750){
+            this.player.x = 2034;
+            this.player.y = 1850;
+        }
+        if (this.player.x >= 2000 && this.player.x <= 2050 &&  this.player.y >= 1800 && this.player.y <= 1825){
+            this.player.x = 2034;
+            this.player.y = 650;
+        }
+        if (this.player.x >= 2400 && this.player.x <= 2425 &&  this.player.y >= 500 && this.player.y <= 525 && this.pass == true){
+            this.player.x = 500;
+            this.player.y = 2200;
+        }
+        if (this.player.x >= 425 && this.player.x <= 450 &&  this.player.y >= 2175 && this.player.y <= 2200){
+            this.player.x = 2325;
+            this.player.y = 525;
+        }
+        
+        if (this.player.x >= 650 && this.player.x <= 700 &&  this.player.y >= 350 && this.player.y <= 375){
+            this.ecranA.setVisible(true)
+        }else{this.ecranA.setVisible(false)}
+
+        if (this.player.x >= 2000 && this.player.x <= 2050 &&  this.player.y >= 450 && this.player.y <= 475){
+            this.ecranF.setVisible(true)
+        }else{this.ecranF.setVisible(false)}
+
+        if (this.player.x >= 550 && this.player.x <= 575 &&  this.player.y >= 1450 && this.player.y <= 1475){
+            this.ecranI.setVisible(true)
+        }else{this.ecranI.setVisible(false)}
+
+        if (this.player.x >= 2400 && this.player.x <= 2425 &&  this.player.y >= 2400 && this.player.y <= 2450){
+            this.ecranB.setVisible(true)
+            this.pass = true
+        }else{this.ecranB.setVisible(false)}
+
+        if (this.player.x >= 950 && this.player.x <= 1000 &&  this.player.y >= 2175 && this.player.y <= 2200){
+            this.ecranS.setVisible(true)
+        }else{this.ecranS.setVisible(false)}
+
+        if (this.player.x >= 2400 && this.player.x <= 2425 &&  this.player.y >= 500 && this.player.y <= 525 && this.pass == false){
+            this.ecranP.setVisible(true)
+        }else{this.ecranP.setVisible(false)}
+
+};
+
+            aie(player,plateformes){
+                    player.hp -=1 ;
+                    console.log("yes")
+                }
+            }
+               
+                function tirer(player) {
+        var coefDir;
+	    if (player.direction == 'left') { coefDir = -1; } else { coefDir = 1 }
+        // on crée la balle a coté du joueur
+        var bullet = groupeBullets.create(player.x + (25 * coefDir), player.y - 4, 'bullet');
+        // parametres physiques de la balle.
+        bullet.setCollideWorldBounds(true);
+        bullet.allowGravity =false;
+        bullet.setVelocity(1000 * coefDir, 0); // vitesse en x et en y
+}    
+            
+    class menu extends Phaser.Scene {
+                    constructor(){
+                        super("menu");
+                    }
+                    preload(){
+                        this.load.image('menu', 'assets/menu.png');
+                        this.load.image('start', 'assets/start.png');
+                        this.load.image('select', 'assets/select_menu.png');
+                    }
+                    create(){
+                        this.add.image(450, 300, 'menu').setScale(1.9);
+                        this.StartText = this.add.image(450, 300, 'start').setScale(1.9);
+                        this.add.image(450, 300, 'select').setScale(1.9).setVisible(false);
+                        this.StartText.setInteractive({ useHandCursor: true });
+                        this.StartText.on('pointerdown', () => this.clickButton());
+                    }
+                    update(){
+                        
+                    }
+                    clickButton() {
+                this.scene.switch('sceneExemple');
+                }
+                
+                }
+          
+          
+            var config = {
+            scene: [menu],
+            type: Phaser.AUTO,
+            width: 900, height: 600,
+            physics: {
+                default: 'arcade',
+                arcade: {
+                debug: false
+            }},
+            scene: [menu,sceneExemple]};
+
+            new Phaser.Game(config);
+
+
+
+        </script>
+    </body>
+</html>
